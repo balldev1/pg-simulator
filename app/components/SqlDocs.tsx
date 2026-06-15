@@ -26,7 +26,7 @@ function CodeBlock({ sql, onUse }: { sql: string; onUse?: () => void }) {
       {onUse && (
         <button
           onClick={onUse}
-          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity text-xs px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded"
+          className="absolute top-2 right-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity text-xs px-2 py-0.5 bg-blue-600 hover:bg-blue-500 text-white rounded"
         >
           Try it
         </button>
@@ -100,7 +100,7 @@ export default function SqlDocs({ onUseQuery }: SqlDocsProps) {
             {"  "}…<br />
             );
           </div>
-          <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
             {[
               ["PRIMARY KEY", "Unique identifier, NOT NULL"],
               ["NOT NULL", "Column must have a value"],
@@ -136,9 +136,9 @@ export default function SqlDocs({ onUseQuery }: SqlDocsProps) {
             ["DROP TABLE …", "Delete the table entirely"],
             ["DROP TABLE IF EXISTS …", "Safe drop — no error if table doesn't exist"],
           ].map(([cmd, desc]) => (
-            <div key={cmd} className="flex gap-3 items-start py-1 border-b border-gray-800">
-              <code className="text-green-300 font-mono whitespace-nowrap min-w-0 shrink-0">{cmd}</code>
-              <span className="text-gray-500">{desc}</span>
+            <div key={cmd} className="flex flex-col sm:flex-row sm:gap-3 sm:items-start py-1 border-b border-gray-800 gap-0.5">
+              <code className="text-green-300 font-mono text-xs shrink-0">{cmd}</code>
+              <span className="text-gray-500 text-xs">{desc}</span>
             </div>
           ))}
         </div>
@@ -252,7 +252,7 @@ export default function SqlDocs({ onUseQuery }: SqlDocsProps) {
 
           <div className="bg-gray-900 border border-gray-700 rounded p-3 text-xs font-mono space-y-3">
             <div className="text-gray-500">-- Seed data — tables linked to users.id</div>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <div className="text-blue-300 mb-1">users (left table)</div>
                 <div className="text-gray-500">id │ name</div>
@@ -390,23 +390,37 @@ export default function SqlDocs({ onUseQuery }: SqlDocsProps) {
   ];
 
   return (
-    <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 56px)" }}>
-      {/* Sticky nav */}
-      <nav className="w-44 bg-gray-900 border-r border-gray-800 overflow-y-auto shrink-0 py-3">
-        <div className="px-3 mb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">SQL Reference</div>
+    <div className="flex flex-col flex-1 overflow-hidden" style={{ height: "calc(100vh - 56px)" }}>
+      {/* Mobile horizontal nav pill bar */}
+      <nav className="md:hidden flex overflow-x-auto gap-1.5 px-3 py-2 bg-gray-900 border-b border-gray-800 shrink-0 scrollbar-none">
         {NAV_ITEMS.map((item) => (
           <a
             key={item.id}
             href={`#doc-${item.id}`}
-            className="block px-3 py-1.5 text-xs text-gray-400 hover:text-green-400 hover:bg-gray-800 transition-colors rounded mx-1"
+            className="shrink-0 px-3 py-1 text-xs rounded-full bg-gray-800 text-gray-400 hover:text-green-400 hover:bg-gray-700 transition-colors whitespace-nowrap"
           >
             {item.label}
           </a>
         ))}
       </nav>
 
+      <div className="flex flex-1 overflow-hidden">
+        {/* Desktop sticky nav */}
+        <nav className="hidden md:block w-44 bg-gray-900 border-r border-gray-800 overflow-y-auto shrink-0 py-3">
+          <div className="px-3 mb-2 text-xs text-gray-500 uppercase tracking-wider font-semibold">SQL Reference</div>
+          {NAV_ITEMS.map((item) => (
+            <a
+              key={item.id}
+              href={`#doc-${item.id}`}
+              className="block px-3 py-1.5 text-xs text-gray-400 hover:text-green-400 hover:bg-gray-800 transition-colors rounded mx-1"
+            >
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
       {/* Content */}
-      <div className="flex-1 overflow-y-auto bg-gray-950 px-6 py-5 space-y-10">
+      <div className="flex-1 overflow-y-auto bg-gray-950 px-4 md:px-6 py-5 space-y-10">
         <div>
           <h1 className="text-green-400 text-xl font-bold font-mono mb-1">SQL Reference</h1>
           <p className="text-gray-500 text-sm">
@@ -438,6 +452,7 @@ export default function SqlDocs({ onUseQuery }: SqlDocsProps) {
         ))}
 
         <div className="h-10" />
+      </div>
       </div>
     </div>
   );
