@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { executeSQL, getDatabase, clearDatabase, seedDatabase, Database } from "@/app/lib/pgSimulator";
 import SqlDocs from "@/app/components/SqlDocs";
 
@@ -149,6 +150,7 @@ export default function PgSimulator() {
   const [activeTab, setActiveTab] = useState<"result" | "history" | "schema">("result");
   const [isLoaded, setIsLoaded] = useState(false);
   const [view, setView] = useState<"query" | "docs">("query");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [openPanels, setOpenPanels] = useState<TablePanel[]>([]);
   const [dragging, setDragging] = useState<{ id: string; ox: number; oy: number } | null>(null);
   const [resizing, setResizing] = useState<{
@@ -288,15 +290,21 @@ export default function PgSimulator() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 font-mono flex flex-col">
       {/* Header */}
-      <header className="border-b border-gray-800 bg-gray-900 px-4 py-3 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="flex gap-1.5">
-            <div className="w-3 h-3 rounded-full bg-red-500" />
-            <div className="w-3 h-3 rounded-full bg-yellow-500" />
-            <div className="w-3 h-3 rounded-full bg-green-500" />
-          </div>
-          <span className="text-green-400 font-bold text-sm">🐘 PostgreSQL Simulator</span>
-          <span className="text-gray-600 text-xs">localhost:5432/simdb</span>
+      <header className="border-b border-gray-800 bg-gray-900 px-3 py-2 flex items-center justify-between gap-2 shrink-0">
+        <div className="flex items-center gap-2">
+          {/* Hamburger — mobile only */}
+          <button
+            className="md:hidden p-1.5 rounded bg-gray-800 hover:bg-gray-700 text-gray-300 text-base leading-none"
+            onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar"
+          >
+            ☰
+          </button>
+          <Image src="/logo.png" alt="PG Simulator" width={28} height={28} className="rounded shrink-0" />
+          <span className="text-green-400 font-bold text-xs sm:text-sm whitespace-nowrap">
+            <span className="hidden sm:inline">PostgreSQL </span>Simulator
+          </span>
+          <span className="hidden lg:inline text-gray-600 text-xs">localhost:5432/simdb</span>
         </div>
 
         <div className="flex items-center gap-1 bg-gray-800 rounded p-0.5">
@@ -304,28 +312,30 @@ export default function PgSimulator() {
             <button
               key={v}
               onClick={() => setView(v)}
-              className={`px-3 py-1 text-xs rounded transition-colors font-semibold uppercase tracking-wide ${
+              className={`px-2 sm:px-3 py-1 text-xs rounded transition-colors font-semibold uppercase tracking-wide ${
                 view === v ? "bg-gray-600 text-white" : "text-gray-400 hover:text-gray-200"
               }`}
             >
-              {v === "query" ? "Query" : "SQL Docs"}
+              {v === "query" ? "Query" : "Docs"}
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-600">{tableNames.length} table(s)</span>
+        <div className="flex items-center gap-1.5">
+          <span className="hidden sm:inline text-xs text-gray-600">{tableNames.length} table(s)</span>
           <button
             onClick={() => { seedDatabase(); refreshDB(); setHistory([]); setOpenPanels([]); }}
-            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-yellow-400 border border-gray-600"
+            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-yellow-400 border border-gray-600 whitespace-nowrap"
           >
-            Seed DB
+            <span className="hidden sm:inline">Seed DB</span>
+            <span className="sm:hidden">Seed</span>
           </button>
           <button
             onClick={() => { clearDatabase(); refreshDB(); setHistory([]); setOpenPanels([]); }}
-            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-red-400 border border-gray-600"
+            className="text-xs px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-red-400 border border-gray-600 whitespace-nowrap"
           >
-            Clear DB
+            <span className="hidden sm:inline">Clear DB</span>
+            <span className="sm:hidden">Clear</span>
           </button>
         </div>
       </header>
@@ -336,8 +346,30 @@ export default function PgSimulator() {
       {/* ── QUERY VIEW ────────────────────────────────────────────────────── */}
       {view === "query" && (
         <div className="flex flex-1 overflow-hidden" style={{ height: "calc(100vh - 56px)" }}>
-          {/* Sidebar */}
-          <aside className="w-52 bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden shrink-0">
+          {/* Mobile backdrop */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 z-30 bg-black/60 md:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Sidebar — slide-over on mobile, static on desktop */}
+          <aside
+            className={`fixed inset-y-0 left-0 z-40 w-52 bg-gray-900 border-r border-gray-800 flex flex-col overflow-hidden transition-transform duration-200
+              md:relative md:translate-x-0 md:z-auto md:shrink-0
+              ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+          >
+            {/* Close button — mobile only */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-800 md:hidden">
+              <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Menu</span>
+              <button
+                className="text-gray-500 hover:text-gray-200 text-xl leading-none"
+                onClick={() => setSidebarOpen(false)}
+              >
+                ×
+              </button>
+            </div>
             {/* Tables section */}
             <div className="shrink-0">
               <div className="px-3 py-2 text-xs text-gray-500 uppercase tracking-wider border-b border-gray-800 flex items-center justify-between">
@@ -353,7 +385,7 @@ export default function PgSimulator() {
                     return (
                       <button
                         key={t}
-                        onClick={() => openTablePanel(t)}
+                        onClick={() => { openTablePanel(t); setSidebarOpen(false); }}
                         title={`Open ${t} data grid`}
                         className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between group transition-colors ${
                           isOpen
@@ -385,7 +417,7 @@ export default function PgSimulator() {
                     {group.snippets.map((s) => (
                       <button
                         key={s.label}
-                        onClick={() => setSql(s.sql)}
+                        onClick={() => { setSql(s.sql); setSidebarOpen(false); }}
                         className="w-full text-left px-3 py-1 text-xs text-gray-400 hover:bg-gray-800 hover:text-white transition-colors truncate"
                         title={s.sql}
                       >
@@ -402,9 +434,9 @@ export default function PgSimulator() {
           <main className="flex-1 flex flex-col overflow-hidden">
             {/* SQL Editor */}
             <div className="bg-gray-900 border-b border-gray-800 shrink-0">
-              <div className="px-4 pt-3 pb-1 flex items-center justify-between">
-                <span className="text-xs text-gray-600">SQL Editor — Ctrl+Enter to run</span>
-                <div className="flex gap-1 flex-wrap">
+              <div className="px-4 pt-3 pb-1 flex items-center justify-between gap-2">
+                <span className="text-xs text-gray-600 whitespace-nowrap">SQL Editor — Ctrl+Enter to run</span>
+                <div className="hidden md:flex gap-1 flex-wrap">
                   {SNIPPET_GROUPS.map((g) =>
                     g.snippets.slice(0, 2).map((s) => (
                       <button
@@ -588,7 +620,7 @@ export default function PgSimulator() {
         </div>
       )}
 
-      {/* ── Floating Table Panels (fixed-positioned, draggable) ────────────── */}
+      {/* ── Floating Table Panels — desktop only (fixed px positions don't work on mobile) */}
       {view === "query" &&
         openPanels.map((panel, zIdx) => {
           const tbl = db.tables[panel.tableName];
@@ -597,7 +629,7 @@ export default function PgSimulator() {
             <div
               key={panel.id}
               style={{ position: "fixed", left: panel.x, top: panel.y, zIndex: 100 + zIdx, width: panel.width, height: panel.height }}
-              className="bg-gray-900 border border-gray-600 rounded-lg shadow-2xl overflow-hidden select-none flex flex-col"
+              className="hidden md:flex bg-gray-900 border border-gray-600 rounded-lg shadow-2xl overflow-hidden select-none flex-col"
               onMouseDown={() => bringToFront(panel.id)}
             >
               {/* Drag handle header */}
